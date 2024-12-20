@@ -32,7 +32,6 @@ func GetUserGroups(userDN string) ([]string, error) {
 	// This is better than binding directly to the userDN and querying memberOf:
 	// in case of nested groups or other complex group structures, the memberOf
 	// attribute may not be populated correctly.
-	// Yet, this only gives results for groups attached to the cluster (GroupBase)
 	req := ldap.NewSearchRequest(
 		utils.Config.Ldap.GroupBase,
 		ldap.ScopeWholeSubtree,
@@ -46,44 +45,13 @@ func GetUserGroups(userDN string) ([]string, error) {
 		return nil, fmt.Errorf("error searching base %v with filter %v due to %w", req.BaseDN, req.Filter, err)
 	}
 
-	var groups []string
-	// This map is necessary to merge the groups from the two queries (the user's memberOf attribute)
-	entryMap := make(map[string]struct{})
-
-	for _, entry := range results.Entries {
-		group := entry.GetAttributeValue("cn")
-		if _, exists := entryMap[group]; !exists {
-			entryMap[group] = struct{}{}
-			groups = append(groups, group)
-		}
-	}
-
-	// to make sure this call is extensive, we add all the groups the user is memberOf
-	reqMemberOf := ldap.NewSearchRequest(
-		userDN,
-		ldap.ScopeWholeSubtree,
-		ldap.NeverDerefAliases, 0, 30, false,
-		"(objectClass=*)",
-		[]string{"memberOf"},
-		nil,
-	)
-	resultsMemberOf, err := ldapQuery(*reqMemberOf)
-	if err != nil {
-		return nil, fmt.Errorf("error searching base %v with filter %v due to %w", req.BaseDN, req.Filter, err)
-	}
 	// TODO: REMOVE THIS, ONLY DEBUGGING PURPOSES
-	utils.Log.Debug().Msg(fmt.Sprintf("User %s is in groups %v, query is on dn %v, filtering %v", userDN, resultsMemberOf.Entries, reqMemberOf.BaseDN, reqMemberOf.Filter))
+	utils.Log.Debug().Msg(fmt.Sprintf("User %s is in groups %v, query is on dn %v, filtering %v", userDN, results.Entries, req.BaseDN, req.Filter))
 
-	for _, entry := range resultsMemberOf.Entries {
-		memberOfGroupList := entry.GetAttributeValues("memberOf")
-		for _, group := range memberOfGroupList {
-			if _, exists := entryMap[group]; !exists {
-				entryMap[group] = struct{}{}
-				groups = append(groups, group)
-			}
-		}
+	var groups []string
+	for _, entry := range results.Entries {
+		groups = append(groups, entry.GetAttributeValue("cn"))
 	}
-
 	return groups, nil
 }
 
