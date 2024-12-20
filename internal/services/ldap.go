@@ -13,6 +13,7 @@ import (
 var DnsParser = regexp.MustCompile("(?:.+_+)*(?P<namespace>.+)_(?P<role>.+)$")
 
 // Get Namespace, Role for a list of group name
+// TODO evrardjp: Make sure we have a ClusterProjects struct which can be built from a list of groups
 func GetUserNamespaces(groups []string) []*types.Project {
 	res := make([]*types.Project, 0)
 	for _, groupname := range groups {
@@ -31,6 +32,7 @@ func GetUserNamespaces(groups []string) []*types.Project {
 // - Project ( namespace without environment)
 // - Environment
 // If environment not found, return the namespace as is
+// TODO evrardjp: Use a project method instead of a function.
 func NamespaceParser(namespace string) types.Project {
 	var project = types.Project{}
 
@@ -50,6 +52,7 @@ func NamespaceParser(namespace string) types.Project {
 }
 
 // Get Namespace, Role for a group name
+// TODO evrardjp: Use a project method instead of a function.
 func GetUserNamespace(group string) (*types.Project, error) {
 
 	lowerGroup := strings.ToLower(group)
