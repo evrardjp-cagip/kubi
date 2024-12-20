@@ -46,7 +46,7 @@ func GetUserGroups(userDN string) ([]string, error) {
 	}
 
 	// TODO: REMOVE THIS, ONLY DEBUGGING PURPOSES
-	utils.Log.Debug().Msg(fmt.Sprintf("User %s is in groups %v, query is on dn %v, filtering %v", userDN, results.Entries, req.BaseDN, req.Filter))
+	utils.Log.Debug().Msg(fmt.Sprintf("User %s is in groups %v", userDN, results.Entries))
 
 	var groups []string
 	for _, entry := range results.Entries {
